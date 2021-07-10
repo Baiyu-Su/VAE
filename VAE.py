@@ -73,6 +73,7 @@ class VAE(nn.Module):
 
         return out, out_activated, self.mean, self.logVar
 
+    # store all parameters of the decoder CNN in a dictionary
     def CNN_parameters(self):
         CNN_parameters = {'decFC': self.decFC, 'decConv1': self.decConv1, 'decConv2': self.decConv2,
                           'cache_shape': self.cache_shape, 'mean': self.mean, 'logVar': self.logVar}

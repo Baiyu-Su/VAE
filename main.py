@@ -110,31 +110,31 @@ def train():
         CNN_parameters = net.CNN_parameters()
 
     # save parameters of this network after training
-    torch.save(net.state_dict(), '/Users/byronsu/PycharmProjects/VAE_practice/nn_parameters/VAE_model.pt')
+    torch.save(net.state_dict(), '~/PycharmProjects/VAE_practice/nn_parameters/VAE_model_BCE.pt')
 
     # show the original images for training
     grid_generation(img_list=original_images_list,
-                    save_path='/Users/byronsu/PycharmProjects/VAE_practice/images/original_images.png')
+                    save_path='~/PycharmProjects/VAE_practice/images/original_images_BCE.png')
 
     # show the reconstructed images through VAE
     grid_generation(img_list=out_activated_images_list,
-                    save_path='/Users/byronsu/PycharmProjects/VAE_practice/images/reconstruction_with_BCE.png')
+                    save_path='~/PycharmProjects/VAE_practice/images/reconstruction_with_BCE.png')
 
     # show the sampled images
     sampled_images_list = [sample(CNN_parameters).cpu().detach() for i in range(10)]
     grid_generation(img_list=sampled_images_list,
-                    save_path='/Users/byronsu/PycharmProjects/VAE_practice/images/sampling_with_BCE.png')
+                    save_path='~/PycharmProjects/VAE_practice/images/sampling_with_BCE.png')
 
     # plot loss vs num of epoch
     plt.plot(num_of_epoch, list_of_loss)
-    plt.savefig('/Users/byronsu/PycharmProjects/VAE_practice/images/loss_vs_epoch_with_BCE.png')
+    plt.savefig('~/PycharmProjects/VAE_practice/images/loss_vs_epoch_with_BCE.png')
     plt.show()
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    path1 = '/Users/byronsu/PycharmProjects/VAE_practice/images/original_images.png'
-    path2 = '/Users/byronsu/PycharmProjects/VAE_practice/images/reconstruction_with_BCE.png'
-    save_path = '/Users/byronsu/PycharmProjects/VAE_practice/images/compare_BCE.png'
+    path1 = '~/PycharmProjects/VAE_practice/images/original_images_BCE.png'
+    path2 = '~/PycharmProjects/VAE_practice/images/reconstruction_with_BCE.png'
+    save_path = '~/PycharmProjects/VAE_practice/images/compare_BCE.png'
     train()
     image_generation(path1=path1, path2=path2, save_path=save_path)

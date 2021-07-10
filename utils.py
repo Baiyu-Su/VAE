@@ -37,6 +37,7 @@ def loss_function(mean, logVar, img, out, loss_type='BCE'):
         raise NameError('unwanted loss type')
 
 
+# make a grid plot with 100 images
 def grid_generation(img_list, save_path):
     images_tensor = torch.cat(img_list, dim=0)
     examples = images_tensor.clone().detach()
@@ -48,6 +49,7 @@ def grid_generation(img_list, save_path):
     plt.show()
 
 
+# concatenate two images together to compare
 def image_generation(path1, path2, save_path):
     img1 = cv2.imread(path1)
     img2 = cv2.imread(path2)
