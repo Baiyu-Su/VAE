@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-
 # apply sampling from multivariate Gaussian and pass through the decoder
 def sample(CNN_parameters):
     std = torch.exp_(0.5 * CNN_parameters['logVar'])
@@ -26,6 +25,8 @@ def sample(CNN_parameters):
 def loss_function(mean, logVar, img, out, loss_type='BCE'):
 
     if loss_type == 'BCE':
+        # thresholding the data (img) to 1 or 0 (black or white)
+        img = torch.where(img > 0.5, 1.0, 0.0)
         KL_divergence = 0.5 * torch.sum(-logVar + mean.pow(2) + torch.exp_(logVar) - 1)
         cross_entropy_loss = F.binary_cross_entropy_with_logits(out, img, reduction='sum')
         loss = KL_divergence + cross_entropy_loss
@@ -62,18 +63,3 @@ def image_generation(path1, path2, save_path):
     comb_img = cv2.hconcat([img1, img2])
     cv2.imwrite(save_path, comb_img)
 
-
-def image_generation_with_threshold(path1, path2, save_path):
-    loader = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
-    img1 = Image.open(path1)
-    img1 = loader(img1).to('cpu', torch.float)
-    img1 = torch.where(img1 > 0.5, 1.0, 0.0)
-
-    img2 = Image.open(path2)
-    img2 = loader(img2).to('cpu', torch.float)
-    img2 = torch.where(img2 > 0.5, 1.0, 0.0)
-
-    comb_img = torch.cat([img1, img2], dim=2)
-    plt.imshow(comb_img.permute(1, 2, 0))
-    plt.axis('off')
-    plt.savefig(save_path, bbox_inches='tight')
