@@ -7,17 +7,22 @@ import torchvision
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 from VAE import VAE
+from utils import sample
+from utils import loss_function
+from utils import grid_generation
+from utils import image_generation
 import ssl
 import requests
 import time
 import torchvision
+import cv2
 
 # initialize the training
 torch.manual_seed(0)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # set hyperparameters
-batch_size = 72
+batch_size = 36
 epoch = 30
 learning_rate = 1e-3
 
@@ -56,6 +61,15 @@ test_loader = torch.utils.data.DataLoader(
 
 # set the neural network and Adam optimizer
 net = VAE().to(device)
+optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
+
+# initialize the list to store loss vs epoch
+num_of_epoch = np.arange(epoch) + 1
+list_of_loss = np.zeros_like(num_of_epoch, dtype='float32')
+
+# initialize the list to store original/reconstructed images
+original_images_list = []
+out_activated_images_list = []
 
 
 # training the model
@@ -63,53 +77,64 @@ def train():
     for index in range(epoch):
 
         # set an adam optimizer with a decaying learning rate
-        optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate / (1 + index))
         for data in train_loader:
+
+            # load data
             img, _ = data
             img = img.to(device)
 
-            # retrieve the outputs from the neural network
-            out, mean, logVar = net(img)
+            optimizer.zero_grad()
+
+            # retrieve the outputs from the neural network (out is the direct output without final activation)
+            out, out_activated, mean, logVar = net(img)
 
             # calculate loss function
-            KL_divergence = 0.5 * torch.sum(-logVar + mean ** 2 + torch.exp_(logVar) - 1)
-            L2_loss = ((out - img) ** 2).sum()
-            loss = KL_divergence + L2_loss
+            loss = loss_function(mean, logVar, img, out, loss_type='BCE')
 
             # back prop
-            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-        # select a neat result from the epochs
-        if index == 0:
-            cache_loss = loss
-
-        if loss < 0.85 * cache_loss and index > 10:
-            break
+            # store all the images produced in the last epoch
+            if index == epoch - 1:
+                original_images_list.append(img)
+                out_activated_images_list.append(out_activated)
 
         # note the performance of each epoch
         end_time = time.time()
         duration = end_time - start_time
-        print('Epoch: {}, Loss: {}, KL: {}, L2: {}'.format(index, loss, KL_divergence, L2_loss))
-        print(duration)
+        print('Epoch: {}, Loss: {}, time: {}'.format(index, loss, duration))
+        list_of_loss[index] = loss.cpu().detach().item()
 
-    # show the reproducted figures
-    examples = out.clone().detach()
+        # retrieve parameters for later use in CNN decoder
+        CNN_parameters = net.CNN_parameters()
 
-    '''for i in range(16):
-        example = torch.reshape(examples[i, :, :], (28, 28))
-        plt.imshow(example, interpolation='nearest')
-        plt.title('Epoch ' + str(index))
-        plt.show()'''
-    # grid of numbers
-    grid = 1 - torchvision.utils.make_grid(examples, nrow=6)
-    channels, width, height = list(grid.shape)
-    grid = torch.reshape(grid, (width, height, channels))
-    plt.imshow(grid)
+    # save parameters of this network after training
+    torch.save(net.state_dict(), '/Users/byronsu/PycharmProjects/VAE_practice/nn_parameters/VAE_model.pt')
+
+    # show the original images for training
+    grid_generation(img_list=original_images_list,
+                    save_path='/Users/byronsu/PycharmProjects/VAE_practice/images/original_images.png')
+
+    # show the reconstructed images through VAE
+    grid_generation(img_list=out_activated_images_list,
+                    save_path='/Users/byronsu/PycharmProjects/VAE_practice/images/reconstruction_with_BCE.png')
+
+    # show the sampled images
+    sampled_images_list = [sample(CNN_parameters).cpu().detach() for i in range(10)]
+    grid_generation(img_list=sampled_images_list,
+                    save_path='/Users/byronsu/PycharmProjects/VAE_practice/images/sampling_with_BCE.png')
+
+    # plot loss vs num of epoch
+    plt.plot(num_of_epoch, list_of_loss)
+    plt.savefig('/Users/byronsu/PycharmProjects/VAE_practice/images/loss_vs_epoch_with_BCE.png')
     plt.show()
 
 
 if __name__ == "__main__":
     start_time = time.time()
+    path1 = '/Users/byronsu/PycharmProjects/VAE_practice/images/original_images.png'
+    path2 = '/Users/byronsu/PycharmProjects/VAE_practice/images/reconstruction_with_BCE.png'
+    save_path = '/Users/byronsu/PycharmProjects/VAE_practice/images/compare_BCE.png'
     train()
+    image_generation(path1=path1, path2=path2, save_path=save_path)

@@ -60,14 +60,21 @@ class VAE(nn.Module):
         tensor = F.relu(self.decConv1(tensor))
 
         # map the numbers back to range 0 - 1
-        tensor = torch.clip_(self.decConv2(tensor), max=1, min=0)
+        tensor = self.decConv2(tensor)
 
         return tensor
 
     def forward(self, tensor):
         # execute feed forward neural network
-        mean, logVar = self.encoder(tensor)
-        tensor = self.reparameterization(mean, logVar)
+        self.mean, self.logVar = self.encoder(tensor)
+        tensor = self.reparameterization(self.mean, self.logVar)
         out = self.decoder(tensor)
+        out_activated = torch.sigmoid(out)
 
-        return out, mean, logVar
+        return out, out_activated, self.mean, self.logVar
+
+    def CNN_parameters(self):
+        CNN_parameters = {'decFC': self.decFC, 'decConv1': self.decConv1, 'decConv2': self.decConv2,
+                          'cache_shape': self.cache_shape, 'mean': self.mean, 'logVar': self.logVar}
+        return CNN_parameters
+
