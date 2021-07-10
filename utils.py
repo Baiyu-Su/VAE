@@ -1,8 +1,12 @@
 import torch
 import torch.nn.functional as F
 import cv2
+from PIL import Image
 import torchvision
+import torchvision.transforms
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 
 # apply sampling from multivariate Gaussian and pass through the decoder
@@ -45,6 +49,7 @@ def grid_generation(img_list, save_path):
     output_examples = examples[0:100, :, :, :]
     grid = torchvision.utils.make_grid(output_examples, nrow=10, normalize=True)
     plt.imshow(grid.permute(1, 2, 0))
+    plt.axis('off')
     plt.savefig(save_path)
     plt.show()
 
@@ -56,3 +61,19 @@ def image_generation(path1, path2, save_path):
 
     comb_img = cv2.hconcat([img1, img2])
     cv2.imwrite(save_path, comb_img)
+
+
+def image_generation_with_threshold(path1, path2, save_path):
+    loader = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
+    img1 = Image.open(path1)
+    img1 = loader(img1).to('cpu', torch.float)
+    img1 = torch.where(img1 > 0.5, 1.0, 0.0)
+
+    img2 = Image.open(path2)
+    img2 = loader(img2).to('cpu', torch.float)
+    img2 = torch.where(img2 > 0.5, 1.0, 0.0)
+
+    comb_img = torch.cat([img1, img2], dim=2)
+    plt.imshow(comb_img.permute(1, 2, 0))
+    plt.axis('off')
+    plt.savefig(save_path, bbox_inches='tight')
