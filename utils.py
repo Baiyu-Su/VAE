@@ -22,7 +22,7 @@ def sample(CNN_parameters):
 
 
 # loss function with BCE/MSE loss + KL divergence loss
-def loss_function(mean, logVar, img, out, loss_type='BCE'):
+def loss_function(mean, logVar, img, out, out_activated, loss_type='BCE'):
 
     if loss_type == 'BCE':
         # thresholding the data (img) to 1 or 0 (black or white)
@@ -34,7 +34,7 @@ def loss_function(mean, logVar, img, out, loss_type='BCE'):
 
     if loss_type == 'MSE':
         KL_divergence = 0.5 * torch.sum(-logVar + mean.pow(2) + torch.exp_(logVar) - 1)
-        mse_loss = F.mse_loss(out, img, reduction='sum')
+        mse_loss = F.mse_loss(out_activated, img, reduction='sum')
         loss = KL_divergence + mse_loss
         return loss
 

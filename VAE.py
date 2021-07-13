@@ -17,18 +17,18 @@ torch.manual_seed(0)
 class VAE(nn.Module):
 
     def __init__(self):
-        super(VAE, self).__init__()
+        super().__init__()
 
         # 3 convolutional encoding layers
         self.encConv1 = nn.Conv2d(in_channels=1, out_channels=4, kernel_size=3)
         self.encConv2 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3)
 
         # two fully connected layers for mean & variance calculation
-        self.encFC1 = nn.Linear(in_features=16 * 24 * 24, out_features=8)
-        self.encFC2 = nn.Linear(in_features=16 * 24 * 24, out_features=8)
+        self.encFC1 = nn.Linear(in_features=16 * 24 * 24, out_features=4)
+        self.encFC2 = nn.Linear(in_features=16 * 24 * 24, out_features=4)
 
         # a fully connected layer and 3 deconvolution layers for decoding
-        self.decFC = nn.Linear(in_features=8, out_features=16 * 24 * 24)
+        self.decFC = nn.Linear(in_features=4, out_features=16 * 24 * 24)
         self.decConv1 = nn.ConvTranspose2d(in_channels=16, out_channels=4, kernel_size=3)
         self.decConv2 = nn.ConvTranspose2d(in_channels=4, out_channels=1, kernel_size=3)
 
